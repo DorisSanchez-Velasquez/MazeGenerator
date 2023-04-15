@@ -5,6 +5,7 @@ public class DFS_Maze {
   private final int width;
   private final int height;
   private final int[][] maze;
+  public final int[][] logicalMaze; 
   private final int empty = 0;
 
   // all the different directions dfs can be performed
@@ -38,6 +39,7 @@ public class DFS_Maze {
     this.width = width;
     this.height = height;
     maze = new int[this.width][this.height];
+    logicalMaze = new int[17][33];
     generateMaze(0, 0);
   }
 
@@ -50,11 +52,14 @@ public class DFS_Maze {
       for (int x = 0; x < width; x++) {
         northEdge.append((maze[x][y] & 1) == 0 ? "+---" : "+   ");
         westEdge.append((maze[x][y] & 8) == 0 ? "+   " : "    ");
+        //System.out.println(westEdge);
       }
       northEdge.append("+");
       westEdge.append("|");
       System.out.println(northEdge.toString());
+      createLogicalMaze(y, northEdge.toString());
       System.out.println(westEdge.toString());
+      createLogicalMaze(y, northEdge.toString());
     }
     // draw the bottom line for the maze
     StringBuilder bottomEdge = new StringBuilder();
@@ -63,6 +68,8 @@ public class DFS_Maze {
     }
     bottomEdge.append("+");
     System.out.println(bottomEdge.toString());
+
+    printLogicMaze(logicalMaze);
   }
 
   private void generateMaze(int x_coord, int y_coord) {
@@ -95,6 +102,44 @@ public class DFS_Maze {
   private boolean isNotVisited(int x, int y) {
     return maze[x][y] == empty;
   }
+
+/*------------------------------------------------------------------------------------------------------------- */
+// BFS MAZE SOLVER
+
+public void createLogicalMaze(int height, String logic){
+    for(int width = 0; width < logic.length(); width++){
+        if(logic.charAt(width) == ' '){
+            logicalMaze[height][width] = 0;
+        }
+        else{
+            logicalMaze[height][width] = 1;
+        }
+    }
+}
+
+public void printLogicMaze(int[][] maze)
+{
+    for(int i = 0; i < maze.length; i++)
+    {
+      System.out.println();
+      for(int j = 0; j < maze.length; j++)
+      {
+          System.out.print(maze[i][j] + " ");
+      }
+    }
+}
+
+/*
+ * everytime, the strings builder object is created and filled; Send to a function that adds it to the logical array
+ * That stores which ones are spaces and which ones are walls.
+ * Create a hashmap that stores the patterns within the grid so when it is time to 
+ */
+
+
+
+
+
+
 
   public static void main(String[] args) {
     // prints out maze with any dimensions

@@ -114,23 +114,33 @@ class mazeSolver extends JPanel {
         solveMazeBFS(g);
     }
 
+
+
+
+
     private void solveMazeBFS(Graphics g){
         int cellSize = 20; // Change this value to adjust the size of the maze cells
 
         int blockSize = cellSize / 2;
         int blockCenter = (cellSize - blockSize) / 2;
+        g.setColor(Color.BLUE);
 
-        for (int y = 0; y < height; y++) {
-            for (int x = 0; x < width; x++) {
+        // g.fillRect(cellX + blockCenter, cellY +
+        // blockCenter, blockSize, blockSize); // Draw end point
 
-                int cellX = x * cellSize;
-                int cellY = y * cellSize;
+        // int cellX = x * cellSize;
+        // int cellY = y * cellSize;
+        // String cellName = y + "," + x;
+        // ArrayList<Integer> cellWalls = logicMaze.get(cellName);
 
-                g.setColor(Color.BLUE);
-                g.fillRect(cellX + blockCenter, cellY +
-                        blockCenter, blockSize, blockSize); // Draw end point
-            }
-        }
+        //Store the north, south, east, and west info of cells
+        MazeCells N, S, E, W;
+
+        //Creating queue to perform BFS
+        Queue<Integer> mazeCells = new LinkedList<>();
+        MazeCells beginCell = new MazeCells(0, 0);
+
+        beginCell.markVisited(); //Set the starting cell as visited
     }
 
 
@@ -269,5 +279,51 @@ class mazeSolver extends JPanel {
         frame.setVisible(true);
         maze.playBackgroundMusic("C:\\Users\\soka\\Documents\\school\\Design and Algorithms\\backgroundmusic.wav");
         });
+    }
+}
+
+class MazeCells{
+    private boolean visited;
+    private MazeCells parentCell;
+    private int xCoordinate;
+    private int yCoordinate;
+
+    //MAZE CELLS CONSTRUCTOR
+    public MazeCells(int x, int y)
+    {
+        visited = false;
+        parentCell = null;
+        this.xCoordinate = x;
+        this.yCoordinate = y;
+    }
+
+    public void markVisited()
+    {
+        visited = true;
+    }
+
+    public boolean isVisited()
+    {
+        return this.visited;
+    }
+
+    public MazeCells getParentCell()
+    {
+        return this.parentCell;
+    }
+
+    public void changeParentCell(MazeCells child)
+    {
+        child.parentCell = this;
+    }
+
+    public int xValue()
+    {
+        return this.xCoordinate;
+    }
+
+    public int yValue()
+    {
+        return this.yCoordinate;
     }
 }

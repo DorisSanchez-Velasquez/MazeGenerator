@@ -46,12 +46,21 @@ class mazeSolver extends JPanel {
         // (use g to draw the maze based on the printMaze() method)
         int cellSize = 20; // Change this value to adjust the size of the maze cells
         g.setColor(Color.cyan); //Some color looks better than others
+
+        int blockSize = cellSize / 2;
+        int blockCenter = (cellSize - blockSize) / 2;
+
         for (int y = 0; y < height; y++) {
             for (int x = 0; x < width; x++) {
+
                 int cellX = x * cellSize;
                 int cellY = y * cellSize;
 
                 ArrayList<Integer> cellLogic = new ArrayList<Integer> ();
+
+                g.setColor(Color.BLUE);
+                g.fillRect(cellX + blockCenter, cellY +
+                        blockCenter, blockSize, blockSize); // Draw end point
 
                 if ((maze[x][y] & DIRECTIONS.NORTH.cell) == 0) {
                     cellLogic.add(1);
@@ -87,7 +96,41 @@ class mazeSolver extends JPanel {
             }
         }
 
+        // Draw start and end points
+        g.setColor(Color.red);
+        g.fillRect(blockCenter, blockCenter, blockSize, blockSize); // Draw start point
+
+        
+        g.setColor(Color.green);
+        g.fillRect((width - 1) * cellSize + blockCenter, (height - 1) * cellSize +
+                blockCenter, blockSize, blockSize); // Draw end point
+
+        //TO LOOP THROUGH THE MATRIX: THIS CODE IS FOR ITERATING AND FILLING WITH COLOR
+        // g.setColor(Color.BLUE);
+        // g.fillRect(1 * cellSize + blockCenter, 0 * cellSize +
+        //         blockCenter, blockSize, blockSize); // Draw end point
+
         System.out.println(logicMaze);
+        solveMazeBFS(g);
+    }
+
+    private void solveMazeBFS(Graphics g){
+        int cellSize = 20; // Change this value to adjust the size of the maze cells
+
+        int blockSize = cellSize / 2;
+        int blockCenter = (cellSize - blockSize) / 2;
+
+        for (int y = 0; y < height; y++) {
+            for (int x = 0; x < width; x++) {
+
+                int cellX = x * cellSize;
+                int cellY = y * cellSize;
+
+                g.setColor(Color.BLUE);
+                g.fillRect(cellX + blockCenter, cellY +
+                        blockCenter, blockSize, blockSize); // Draw end point
+            }
+        }
     }
 
 

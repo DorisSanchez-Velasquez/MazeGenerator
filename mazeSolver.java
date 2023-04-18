@@ -138,14 +138,85 @@ class mazeSolver extends JPanel {
 
         //Creating queue to perform BFS
         Queue<MazeCells> mazeCells = new LinkedList<>();
-        MazeCells beginCell = new MazeCells(0, 0, 1);
+        MazeCells beginCell = new MazeCells(0, 0, 'S');
+        MazeCells endCell = new MazeCells(width, height, 'E');
 
         beginCell.markVisited(); //Set the starting cell as visited
         mazeCells.add(beginCell);
 
         while(!mazeCells.isEmpty()){
             MazeCells currentCell = mazeCells.poll();
-            
+
+            //Check if the the current cell is the ending point
+            if(currentCell.getCellContent() == 'E')
+            {
+                printPathCell(currentCell, g, blockCenter, blockSize, cellSize);
+                return;
+            }
+
+            //Check if the current cell is a north cell and store it in the path
+            if( !((currentCell.yValue() - 1) <= 0) ) //If not out of range
+            {   
+                N = new MazeCells(currentCell.xValue(), currentCell.yValue(), '0');
+                if(!N.isVisited())
+                {
+                    N.markVisited(); //Mark the cell as visited
+                    currentCell.changeParentCell(N); //Change the parent to track in shortest path
+                    mazeCells.add(N); //Enqueue to the queue tracking mazeCells
+                }
+            }
+
+            //Check if the current cell is a south cell and store it in the path
+            if( !((currentCell.yValue() + 1) >= height))
+            {
+                S = new MazeCells(currentCell.xValue(), currentCell.yValue(), '0');
+                if(!S.isVisited())
+                {
+                    S.markVisited();
+                    currentCell.changeParentCell(S);
+                    mazeCells.add(S);
+                }
+            }
+
+            //Check if the current cell is an east cell and store it in the path
+            if( !((currentCell.xValue() - 1) <= 0))
+            {
+                S = new MazeCells(currentCell.xValue(), currentCell.yValue(), '0');
+                if(!S.isVisited())
+                {
+                    S.markVisited();
+                    currentCell.changeParentCell(S);
+                    mazeCells.add(S);
+                }
+            }
+
+            //Check if the current cell is a west cell and store it in the path
+            if( !((currentCell.xValue() + 1) >= width))
+            {
+                S = new MazeCells(currentCell.xValue(), currentCell.yValue(), '0');
+                if(!S.isVisited())
+                {
+                    S.markVisited();
+                    currentCell.changeParentCell(S);
+                    mazeCells.add(S);
+                }
+            }
+        }
+
+        //Report maze as unsolvable
+        System.out.println("Oh no! The Maze in unsolvable!");
+        System.out.println();
+    }
+
+    public void printPathCell(MazeCells pathCell, Graphics g, int blockCenter, int blockSize, int cellSize)
+    {
+        while(pathCell.getParentCell() != null)
+        {
+            pathCell = pathCell.getParentCell();
+            //Change color of the cell to blue
+            int cellX = pathCell.xValue() * cellSize;
+            int cellY = pathCell.yValue() * cellSize;
+            g.fillRect(cellX + blockCenter, cellY + blockCenter, blockSize, blockSize); // Draw end point
         }
     }
 
@@ -293,16 +364,21 @@ class MazeCells{
     private MazeCells parentCell;
     private int xCoordinate;
     private int yCoordinate;
-    private int cellContent;
+    private char cellContent;
 
     //MAZE CELLS CONSTRUCTOR
-    public MazeCells(int x, int y, int c)
+    public MazeCells(int x, int y, char c)
     {
         visited = false;
         parentCell = null;
         this.cellContent = c;
         this.xCoordinate = x;
         this.yCoordinate = y;
+    }
+
+    public char getCellContent()
+    {
+        return this.cellContent;
     }
 
     public void markVisited()

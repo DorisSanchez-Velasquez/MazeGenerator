@@ -137,10 +137,16 @@ class mazeSolver extends JPanel {
         MazeCells N, S, E, W;
 
         //Creating queue to perform BFS
-        Queue<Integer> mazeCells = new LinkedList<>();
-        MazeCells beginCell = new MazeCells(0, 0);
+        Queue<MazeCells> mazeCells = new LinkedList<>();
+        MazeCells beginCell = new MazeCells(0, 0, 1);
 
         beginCell.markVisited(); //Set the starting cell as visited
+        mazeCells.add(beginCell);
+
+        while(!mazeCells.isEmpty()){
+            MazeCells currentCell = mazeCells.poll();
+            
+        }
     }
 
 
@@ -287,12 +293,14 @@ class MazeCells{
     private MazeCells parentCell;
     private int xCoordinate;
     private int yCoordinate;
+    private int cellContent;
 
     //MAZE CELLS CONSTRUCTOR
-    public MazeCells(int x, int y)
+    public MazeCells(int x, int y, int c)
     {
         visited = false;
         parentCell = null;
+        this.cellContent = c;
         this.xCoordinate = x;
         this.yCoordinate = y;
     }

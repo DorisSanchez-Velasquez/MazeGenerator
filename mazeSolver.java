@@ -20,8 +20,6 @@ class mazeSolver extends JPanel {
     private final int width;
     private final int height;
     private int[][] maze;
-    private HashMap<String, ArrayList<Integer>> logicMaze; 
-    //ArrayList<Type> str = new ArrayList<Type>();
     private BufferedImage backgroundImage;
 
     @Override
@@ -56,39 +54,18 @@ class mazeSolver extends JPanel {
                 int cellX = x * cellSize;
                 int cellY = y * cellSize;
 
-                ArrayList<Integer> cellLogic = new ArrayList<Integer> ();
-
                 if ((maze[x][y] & DIRECTIONS.NORTH.cell) == 0) {
-                    cellLogic.add(1);
                     g.drawLine(cellX, cellY, cellX + cellSize, cellY);
                 }
-                else{
-                    cellLogic.add(0);
-                }
                 if ((maze[x][y] & DIRECTIONS.SOUTH.cell) == 0) {
-                    cellLogic.add(1);
                     g.drawLine(cellX, cellY + cellSize, cellX + cellSize, cellY + cellSize);
                 }
-                else{
-                    cellLogic.add(0);
-                }
                 if ((maze[x][y] & DIRECTIONS.EAST.cell) == 0) {
-                    cellLogic.add(1);
                     g.drawLine(cellX + cellSize, cellY, cellX + cellSize, cellY + cellSize);
                 }
-                else{
-                    cellLogic.add(0);
-                }
                 if ((maze[x][y] & DIRECTIONS.WEST.cell) == 0) {
-                    cellLogic.add(1);
                     g.drawLine(cellX, cellY, cellX, cellY + cellSize);
                 }
-                else{
-                    cellLogic.add(0);
-                }
-                
-                String cell = x + "," + y;
-                logicMaze.put(cell, cellLogic);
             }
         }
 
@@ -104,9 +81,6 @@ class mazeSolver extends JPanel {
         ArrayList<MazeCells> shortestPath = solveMazeBFS(g); //Store the shortest path
         printShortestPath(shortestPath, g, cellSize, blockCenter, blockSize); //Color the shortest path on the frame
     }
-
-
-
 
 
     private ArrayList<MazeCells> solveMazeBFS(Graphics g){
@@ -125,10 +99,6 @@ class mazeSolver extends JPanel {
             //Get the current maze cell
             MazeCells currentCell = nextMazeCell.remove();
 
-            //Get the logic for the walls at the current cell
-            String cellName = currentCell.getXValue() + "," + currentCell.getYValue();
-            ArrayList<Integer> currentCellWalls = logicMaze.get(cellName);
-
             //If the cell is not within the maze dimensions and the cell has not been visited, break iteration
             if(!isTrue(currentCell.getXValue(), currentCell.getYValue()) || currentCell.isVisited())
             {
@@ -142,23 +112,23 @@ class mazeSolver extends JPanel {
                 return backtrackPath(currentCell);
             }
 
-            int wall = 0;
             for(int[] direction : Directions)
             {
                 //If a wall exist N, S, E, W at the current cell, then don't move in that direction
-                if(currentCellWalls.get(wall) != 1)
+                if(!currentCell.checkForWalls(direction[0], direction[1], currentCell, maze))
                 {
                     MazeCells nextCell = new MazeCells(currentCell.getXValue() + direction[0], currentCell.getYValue() + direction[1], currentCell);
                     nextMazeCell.add(nextCell);
                     currentCell.setVisited(); 
                 }
-                wall++; //Increment the wall that is being checked
             }
         }
 
         //If end cell is never found, return an empty path.
         return new ArrayList<MazeCells>();
     }
+
+
 
     private ArrayList<MazeCells> backtrackPath(MazeCells currentCell)
     {
@@ -173,6 +143,9 @@ class mazeSolver extends JPanel {
 
         return path; //Return the path form the start cell to the end cell
     }
+
+
+
 
     public void printShortestPath(ArrayList<MazeCells> shortestPath, Graphics g, int cellSize, int blockCenter, int blockSize)
     {
@@ -244,7 +217,6 @@ class mazeSolver extends JPanel {
         this.width = width;
         this.height = height;
         maze = new int[this.width][this.height];
-        logicMaze = new HashMap<String, ArrayList<Integer>>();
         generateMaze(0, 0);
 
         try {
@@ -333,6 +305,7 @@ class MazeCells{
     private int xCoordinate;
     private int yCoordinate;
     private boolean visited;
+    private boolean N, S, E, W;
 
     //MAZE CELLS CONSTRUCTOR
     public MazeCells(int x, int y)
@@ -341,6 +314,11 @@ class MazeCells{
         this.parentCell = null;
         this.xCoordinate = x;
         this.yCoordinate = y;
+        this.N = false;
+        this.S = false;
+        this.E = false;
+        this.W = false;
+
     }
 
     public MazeCells(int x, int y, MazeCells parentCell)
@@ -348,6 +326,31 @@ class MazeCells{
         this.parentCell = parentCell;
         this.xCoordinate = x;
         this.yCoordinate = y;
+    }
+
+    public boolean checkForWalls(int x, int y, MazeCells currentCell, int[][] maze)
+    {
+        int xCoord = currentCell.getXValue();
+        int yCoord = currentCell.getYValue();
+
+        if(x == 0 && y == -1)
+        {
+            return (maze[xCoord][yCoord] & 1) == 0;
+        }
+        if(x == 0 && y == 1)
+        {
+            return (maze[xCoord][yCoord] & 2) == 0;
+        }
+        if(x == 1 && y == 0)
+        {
+            return (maze[xCoord][yCoord] & 4) == 0; 
+        }
+        if(x == -1 && y == 0)
+        {
+            return (maze[xCoord][yCoord] & 8) == 0;
+        }
+
+        return false;
     }
 
     public void setVisited()
@@ -363,6 +366,11 @@ class MazeCells{
     public MazeCells getParentCell()
     {
         return this.parentCell;
+    }
+
+    public void setParentCell(MazeCells parent)
+    {
+        this.parentCell = parent;
     }
 
     public int getXValue()

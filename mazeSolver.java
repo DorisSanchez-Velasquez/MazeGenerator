@@ -305,7 +305,6 @@ class MazeCells{
     private int xCoordinate;
     private int yCoordinate;
     private boolean visited;
-    private boolean N, S, E, W;
 
     //MAZE CELLS CONSTRUCTOR
     public MazeCells(int x, int y)
@@ -314,11 +313,6 @@ class MazeCells{
         this.parentCell = null;
         this.xCoordinate = x;
         this.yCoordinate = y;
-        this.N = false;
-        this.S = false;
-        this.E = false;
-        this.W = false;
-
     }
 
     public MazeCells(int x, int y, MazeCells parentCell)

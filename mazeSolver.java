@@ -88,7 +88,7 @@ class mazeSolver extends JPanel {
         int[][] Directions = {{0,-1}, {0,1},{1,0},{-1,0}};
 
         //Create a linked list that will store the new paths for each cell
-        Queue<MazeCells> nextMazeCell = new LinkedList<>();
+        LinkedList<MazeCells> nextMazeCell = new LinkedList<>();
 
         //Add the first cell: 0,0 to the current path
         MazeCells startCell = new MazeCells(0,0);

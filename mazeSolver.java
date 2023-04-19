@@ -308,7 +308,7 @@ class mazeSolver extends JPanel {
 
 
 
-    // valid to move if there's no wall
+    // valid to move if there's no wal
     private boolean isNotVisited(int x, int y) {
         int empty = 0;
         return maze[x][y] == empty;

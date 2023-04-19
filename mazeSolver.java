@@ -317,7 +317,7 @@ class mazeSolver extends JPanel {
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
         JFrame frame = new JFrame("Maze Generator");
-        mazeSolver maze = new mazeSolver(7, 7);
+        mazeSolver maze = new mazeSolver(6, 6);
         frame.add(maze);
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.pack();

@@ -20,7 +20,7 @@ class mazeSolver extends JPanel {
     private final int width;
     private final int height;
     private int[][] maze;
-    private HashMap<String, ArrayList<Integer>> logicMaze; 
+    private HashMap<String, MazeCells> logicMaze; 
     //ArrayList<Type> str = new ArrayList<Type>();
     private BufferedImage backgroundImage;
 
@@ -49,6 +49,7 @@ class mazeSolver extends JPanel {
 
         int blockSize = cellSize / 2;
         int blockCenter = (cellSize - blockSize) / 2;
+        MazeCells startCell;
 
         for (int y = 0; y < height; y++) {
             for (int x = 0; x < width; x++) {
@@ -56,39 +57,32 @@ class mazeSolver extends JPanel {
                 int cellX = x * cellSize;
                 int cellY = y * cellSize;
 
-                ArrayList<Integer> cellLogic = new ArrayList<Integer> ();
+                MazeCells mazeCell = new MazeCells(x, y);
 
                 if ((maze[x][y] & DIRECTIONS.NORTH.cell) == 0) {
-                    cellLogic.add(1);
+                    mazeCell.setNorth();
                     g.drawLine(cellX, cellY, cellX + cellSize, cellY);
                 }
-                else{
-                    cellLogic.add(0);
-                }
                 if ((maze[x][y] & DIRECTIONS.SOUTH.cell) == 0) {
-                    cellLogic.add(1);
+                    mazeCell.setSouth();
                     g.drawLine(cellX, cellY + cellSize, cellX + cellSize, cellY + cellSize);
                 }
-                else{
-                    cellLogic.add(0);
-                }
                 if ((maze[x][y] & DIRECTIONS.EAST.cell) == 0) {
-                    cellLogic.add(1);
+                    mazeCell.setEast();
                     g.drawLine(cellX + cellSize, cellY, cellX + cellSize, cellY + cellSize);
                 }
-                else{
-                    cellLogic.add(0);
-                }
                 if ((maze[x][y] & DIRECTIONS.WEST.cell) == 0) {
-                    cellLogic.add(1);
+                    mazeCell.setWest();
                     g.drawLine(cellX, cellY, cellX, cellY + cellSize);
                 }
-                else{
-                    cellLogic.add(0);
+
+                if(x == 0 && y ==0)
+                {
+                    startCell = mazeCell;
                 }
-                
-                String cell = x + "," + y;
-                logicMaze.put(cell, cellLogic);
+
+                String cellName = x + "," + y;
+                logicMaze.put(cellName, mazeCell);
             }
         }
 
@@ -117,17 +111,13 @@ class mazeSolver extends JPanel {
         LinkedList<MazeCells> nextMazeCell = new LinkedList<>();
 
         //Add the first cell: 0,0 to the current path
-        MazeCells startCell = new MazeCells(0,0);
-        nextMazeCell.add(startCell);
+        nextMazeCell.add(logicMaze.get("0,0"));
 
         //Check if the current path is empty
         while(!nextMazeCell.isEmpty()){
             //Get the current maze cell
             MazeCells currentCell = nextMazeCell.remove();
-
-            //Get the logic for the walls at the current cell
-            String cellName = currentCell.getXValue() + "," + currentCell.getYValue();
-            ArrayList<Integer> currentCellWalls = logicMaze.get(cellName);
+            String currentCellName = currentCell.getXValue() + "," + currentCell.getYValue();
 
             //If the cell is not within the maze dimensions and the cell has not been visited, break iteration
             if(!isTrue(currentCell.getXValue(), currentCell.getYValue()) || currentCell.isVisited())
@@ -142,17 +132,17 @@ class mazeSolver extends JPanel {
                 return backtrackPath(currentCell);
             }
 
-            int wall = 0;
             for(int[] direction : Directions)
             {
                 //If a wall exist N, S, E, W at the current cell, then don't move in that direction
-                if(currentCellWalls.get(wall) != 1)
+                if(!(currentCell.checkWall(direction[0], direction[1])))
                 {
-                    MazeCells nextCell = new MazeCells(currentCell.getXValue() + direction[0], currentCell.getYValue() + direction[1], currentCell);
+                    String nextCellName = (currentCell.getXValue() + direction[0]) + "," + (currentCell.getYValue() + direction[1]);
+                    MazeCells nextCell = logicMaze.get(nextCellName);
+                    nextCell.setParentCell(currentCell);
                     nextMazeCell.add(nextCell);
                     currentCell.setVisited(); 
                 }
-                wall++; //Increment the wall that is being checked
             }
         }
 
@@ -244,7 +234,7 @@ class mazeSolver extends JPanel {
         this.width = width;
         this.height = height;
         maze = new int[this.width][this.height];
-        logicMaze = new HashMap<String, ArrayList<Integer>>();
+        logicMaze = new HashMap<String, MazeCells>();
         generateMaze(0, 0);
 
         try {
@@ -317,7 +307,7 @@ class mazeSolver extends JPanel {
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
         JFrame frame = new JFrame("Maze Generator");
-        mazeSolver maze = new mazeSolver(6, 6);
+        mazeSolver maze = new mazeSolver(4, 4);
         frame.add(maze);
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.pack();
@@ -333,6 +323,7 @@ class MazeCells{
     private int xCoordinate;
     private int yCoordinate;
     private boolean visited;
+    private boolean N, S, E, W;
 
     //MAZE CELLS CONSTRUCTOR
     public MazeCells(int x, int y)
@@ -341,6 +332,11 @@ class MazeCells{
         this.parentCell = null;
         this.xCoordinate = x;
         this.yCoordinate = y;
+        this.N = false;
+        this.S = false;
+        this.E = false;
+        this.W = false;
+
     }
 
     public MazeCells(int x, int y, MazeCells parentCell)
@@ -350,9 +346,52 @@ class MazeCells{
         this.yCoordinate = y;
     }
 
+    public boolean checkWall(int x, int y)
+    {
+        if(x == 0 && y == -1)
+        {
+            return N;
+        }
+        else if(x == 0 && y == 1)
+        {
+            return S;
+        }
+        else if(x == 1 && y == 0)
+        {
+            return E;
+        }
+        else if(x == -1 && y == 0)
+        {
+            return W;
+        }
+
+        return false;
+
+    }
+
     public void setVisited()
     {
         this.visited = true;
+    }
+
+    public void setNorth()
+    {
+        this.N = true;
+    }
+
+    public void setSouth()
+    {
+        this.S = true;
+    }
+
+    public void setWest()
+    {
+        this.W = true;
+    }
+
+    public void setEast()
+    {
+        this.E = true;
     }
 
     public boolean isVisited()
@@ -363,6 +402,11 @@ class MazeCells{
     public MazeCells getParentCell()
     {
         return this.parentCell;
+    }
+
+    public void setParentCell(MazeCells parent)
+    {
+        this.parentCell = parent;
     }
 
     public int getXValue()

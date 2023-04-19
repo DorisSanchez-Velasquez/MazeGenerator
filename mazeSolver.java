@@ -34,11 +34,9 @@ class mazeSolver extends JPanel {
                     (mazeHeight - backgroundImage.getHeight()) / 2, this);
         }
         drawMaze(g);
+        ArrayList<MazeCells> shortestPath = solveMazeBFS(); //Store the shortest path
+        printShortestPath(shortestPath, g, 20, 10, 10); //Color the shortest path on the frame
     }
-
-
-
-
     // Add this new method to draw the maze using the Graphics object
     private void drawMaze(Graphics g) {
         // (use g to draw the maze based on the printMaze() method)
@@ -68,103 +66,110 @@ class mazeSolver extends JPanel {
                 }
             }
         }
-
         // Draw start and end points
         g.setColor(Color.red);
         g.fillRect(blockCenter, blockCenter, blockSize, blockSize); // Draw start point
 
-        
         g.setColor(Color.green);
         g.fillRect((width - 1) * cellSize + blockCenter, (height - 1) * cellSize +
                 blockCenter, blockSize, blockSize); // Draw end point
 
-        ArrayList<MazeCells> shortestPath = solveMazeBFS(g); //Store the shortest path
-        printShortestPath(shortestPath, g, cellSize, blockCenter, blockSize); //Color the shortest path on the frame
+        drawShortestPathOnMaze(g);
+    }
+    public void drawShortestPathOnMaze(Graphics g) {
+        int cellSize = 20;
+        int blockCenter = (cellSize - (cellSize / 2)) / 2;
+        int blockSize = cellSize / 2;
+
+        ArrayList<MazeCells> shortestPath = solveMazeBFS();
+        printShortestPath(shortestPath, g, cellSize, blockCenter, blockSize);
     }
 
+  
+    private ArrayList<MazeCells> solveMazeBFS() {
+        // Define the possible directions to move in the maze
+        int[][] directions = {{0, -1}, {0, 1}, {1, 0}, {-1, 0}};
 
-    private ArrayList<MazeCells> solveMazeBFS(Graphics g){
-        //Store the directions: North, South, East, West
-        int[][] Directions = {{0,-1}, {0,1},{1,0},{-1,0}};
-
-        //Create a linked list that will store the new paths for each cell
+        //Linked list to store the cells to visit next
         LinkedList<MazeCells> nextMazeCell = new LinkedList<>();
 
-        //Add the first cell: 0,0 to the current path
-        MazeCells startCell = new MazeCells(0,0);
-        nextMazeCell.add(startCell);
+        // Create a set to store the visited cells
+        Set<MazeCells> visitedCells = new HashSet<>();
 
-        //Check if the current path is empty
-        while(!nextMazeCell.isEmpty()){
-            //Get the current maze cell
+        // Start the search from the top-left cell of the maze
+        MazeCells startCell = new MazeCells(0, 0);
+        nextMazeCell.add(startCell);
+        visitedCells.add(startCell);
+
+        // Keep searching until there are no more cells to visit
+        while (!nextMazeCell.isEmpty()) {
+            // Remove the first cell from the list of cells to visit next
             MazeCells currentCell = nextMazeCell.remove();
 
-            //If the cell is not within the maze dimensions and the cell has not been visited, break iteration
-            if(!isTrue(currentCell.getXValue(), currentCell.getYValue()) || currentCell.isVisited())
-            {
-                continue;
-            }
-
-            //If the cell is the exit, then start backtracking the path
-            if(currentCell.getXValue() == width-1 && currentCell.getYValue() == height-1)
-            {
-                //Return the path from the start cell to the end cell
+            // Check if the current cell is the bottom-right cell of the maze
+            if (currentCell.getXValue() == width - 1 && currentCell.getYValue() == height - 1) {
+                // If it is, return the path from the start cell to this cell
                 return backtrackPath(currentCell);
             }
 
-            for(int[] direction : Directions)
-            {
-                //If a wall exist N, S, E, W at the current cell, then don't move in that direction
-                if(!currentCell.checkForWalls(direction[0], direction[1], currentCell, maze))
-                {
-                    MazeCells nextCell = new MazeCells(currentCell.getXValue() + direction[0], currentCell.getYValue() + direction[1], currentCell);
-                    nextMazeCell.add(nextCell);
-                    currentCell.setVisited(); 
+            // Iterate over the possible directions to move in the maze
+            for (int[] direction : directions) {
+                int newX = currentCell.getXValue() + direction[0];
+                int newY = currentCell.getYValue() + direction[1];
+                MazeCells nextCell = new MazeCells(newX, newY, currentCell);
+
+                // Check if the next cell is within the boundaries of the maze
+                if (isTrue(newX, newY) && !visitedCells.contains(nextCell)) {
+                    int dx = direction[0], dy = direction[1];
+                    boolean canMove = false;
+
+                    // Check if there's a wall in the current direction
+                    if (dx == 1 && (maze[currentCell.getXValue()][currentCell.getYValue()] & DIRECTIONS.EAST.cell) != 0) {
+                        canMove = true;
+                    } else if (dx == -1 && (maze[currentCell.getXValue()][currentCell.getYValue()] & DIRECTIONS.WEST.cell) != 0) {
+                        canMove = true;
+                    } else if (dy == 1 && (maze[currentCell.getXValue()][currentCell.getYValue()] & DIRECTIONS.SOUTH.cell) != 0) {
+                        canMove = true;
+                    } else if (dy == -1 && (maze[currentCell.getXValue()][currentCell.getYValue()] & DIRECTIONS.NORTH.cell) != 0) {
+                        canMove = true;
+                    }
+
+                    // If there's no wall in the current direction, add the next cell to the list of cells to visit next
+                    if (canMove) {
+                        nextMazeCell.add(nextCell);
+                        visitedCells.add(nextCell);
+                    }
                 }
             }
         }
-
-        //If end cell is never found, return an empty path.
+        //return empty list if no path
         return new ArrayList<MazeCells>();
     }
 
-
-
-    private ArrayList<MazeCells> backtrackPath(MazeCells currentCell)
-    {
+  
+    private ArrayList<MazeCells> backtrackPath(MazeCells currentCell) {
         ArrayList<MazeCells> path = new ArrayList<>(); //Stores the path from the currentCell
         MazeCells iteration = currentCell;
 
-        while(iteration != null) //If the cell still has a parent, 
-        {
+        while(iteration != null) {//If the cell still has a parent,
             path.add(iteration); //Add the currentCell to the path
             iteration = iteration.getParentCell(); //Get the parent of the currentCell
         }
-
         return path; //Return the path form the start cell to the end cell
     }
 
-
-
-
-    public void printShortestPath(ArrayList<MazeCells> shortestPath, Graphics g, int cellSize, int blockCenter, int blockSize)
-    {
+  
+    public void printShortestPath(ArrayList<MazeCells> shortestPath, Graphics g, int cellSize, int blockCenter, int blockSize) {
         //Iterate through every cell in the maze found in the shortest path and color it blue
         g.setColor(Color.blue);
-        for(MazeCells cell: shortestPath)
-        {
-            if(!(cell.getXValue() == 0 && cell.getYValue() == 0) && !(cell.getXValue() == width-1 && cell.getYValue() == height-1) )
-            {
+        for(MazeCells cell: shortestPath) {
+            if(!(cell.getXValue() == 0 && cell.getYValue() == 0) && !(cell.getXValue() == width-1 && cell.getYValue() == height-1) ) {
                 int cellX = cell.getXValue() * cellSize;
                 int cellY = cell.getYValue() * cellSize;
                 g.fillRect(cellX + blockCenter, cellY + blockCenter, blockSize, blockSize);
             }
         }
     }
-
-
-
-
     // all the different directions dfs can be performed
     private enum DIRECTIONS {
         NORTH(1, 0, -1),
@@ -189,14 +194,9 @@ class mazeSolver extends JPanel {
             this.y = y;
         }
     }
-
-
-
-
-
-    private void playBackgroundMusic(String musicFilePath) {
+    private void playBackgroundMusic() {
         try {
-            File musicFile = new File(musicFilePath);
+            File musicFile = new File("C:\\Users\\soka\\Documents\\school\\Design and Algorithms\\backgroundmusic.wav");
             AudioInputStream audioInputStream = AudioSystem.getAudioInputStream(musicFile);
             Clip clip = AudioSystem.getClip();
             clip.open(audioInputStream);
@@ -207,11 +207,6 @@ class mazeSolver extends JPanel {
             e.printStackTrace();
         }
     }
-
-
-
-
-
     // dimensions of the maze
     public mazeSolver(int width, int height) {
         this.width = width;
@@ -228,7 +223,7 @@ class mazeSolver extends JPanel {
             e.printStackTrace();
         }
         int cellSize = 20; // Change this value to adjust the size of the maze cells
-        setPreferredSize(new Dimension(width * cellSize, height * cellSize));
+        setPreferredSize(new Dimension(width * cellSize + 2, height * cellSize + 2));
         // Add this block of code to the mazeSolver constructor
         setFocusable(true);
         addKeyListener(new KeyAdapter() {
@@ -242,12 +237,6 @@ class mazeSolver extends JPanel {
             }
         });
     }
-
-
-
-
-
-
     private void generateMaze(int x_cord, int y_cord) {
         // creates a list of all the values in the directions
         DIRECTIONS[] neighbors = DIRECTIONS.values();
@@ -268,112 +257,96 @@ class mazeSolver extends JPanel {
             }
         }
     }
-
-
-
     // checks if coordinates are within the maze
     private boolean isTrue(int x, int y) {
         return (x >= 0 && y >= 0 && x < width && y < height);
     }
-
-
-
-
-
     // valid to move if there's no wal
     private boolean isNotVisited(int x, int y) {
         int empty = 0;
         return maze[x][y] == empty;
     }
-
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
-        JFrame frame = new JFrame("Maze Generator");
-        mazeSolver maze = new mazeSolver(6, 6);
-        frame.add(maze);
-        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.pack();
-        frame.setLocationRelativeTo(null);
-        frame.setVisible(true);
-        maze.playBackgroundMusic("C:\\Users\\soka\\Documents\\school\\Design and Algorithms\\backgroundmusic.wav");
+            JFrame frame = new JFrame("Maze Generator");
+            mazeSolver maze = new mazeSolver(20, 20);
+            frame.add(maze);
+            frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+            frame.pack();
+            frame.setLocationRelativeTo(null);
+            frame.setVisible(true);
+            maze.playBackgroundMusic();
         });
     }
 }
-
-class MazeCells{
+class MazeCells {
     private MazeCells parentCell;
-    private int xCoordinate;
-    private int yCoordinate;
+    private final int xCoordinate;
+    private final int yCoordinate;
     private boolean visited;
 
-    //MAZE CELLS CONSTRUCTOR
-    public MazeCells(int x, int y)
-    {
+    //Maze cell constructor
+    public MazeCells(int x, int y) {
         this.visited = false;
         this.parentCell = null;
         this.xCoordinate = x;
         this.yCoordinate = y;
+        boolean n = false;
+        boolean s = false;
+        boolean e = false;
+        boolean w = false;
     }
-
-    public MazeCells(int x, int y, MazeCells parentCell)
-    {
+    public MazeCells(int x, int y, MazeCells parentCell) {
         this.parentCell = parentCell;
         this.xCoordinate = x;
         this.yCoordinate = y;
     }
-
-    public boolean checkForWalls(int x, int y, MazeCells currentCell, int[][] maze)
-    {
+    public boolean checkForWalls(int x, int y, MazeCells currentCell, int[][] maze) {
         int xCoord = currentCell.getXValue();
         int yCoord = currentCell.getYValue();
 
-        if(x == 0 && y == -1)
-        {
+        if(x == 0 && y == -1) {
             return (maze[xCoord][yCoord] & 1) == 0;
         }
-        if(x == 0 && y == 1)
-        {
+        if(x == 0 && y == 1) {
             return (maze[xCoord][yCoord] & 2) == 0;
         }
-        if(x == 1 && y == 0)
-        {
-            return (maze[xCoord][yCoord] & 4) == 0; 
+        if(x == 1 && y == 0) {
+            return (maze[xCoord][yCoord] & 4) == 0;
         }
-        if(x == -1 && y == 0)
-        {
+        if(x == -1 && y == 0) {
             return (maze[xCoord][yCoord] & 8) == 0;
         }
-
         return false;
     }
-
-    public void setVisited()
-    {
+    public void setVisited() {
         this.visited = true;
     }
-
-    public boolean isVisited()
-    {
+    public boolean isVisited() {
         return this.visited;
     }
-
-    public MazeCells getParentCell()
-    {
+    public MazeCells getParentCell() {
         return this.parentCell;
     }
-
-    public void setParentCell(MazeCells parent)
-    {
+    public void setParentCell(MazeCells parent) {
         this.parentCell = parent;
     }
-
-    public int getXValue()
-    {
+    public int getXValue() {
         return this.xCoordinate;
     }
-
-    public int getYValue()
-    {
+    public int getYValue() {
         return this.yCoordinate;
+    }
+
+    @Override//the equals' method to compare two MazeCells based on their x and y coordinates
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        MazeCells that = (MazeCells) o;
+        return xCoordinate == that.xCoordinate && yCoordinate == that.yCoordinate;
+    }
+    @Override //the hashCode method to generate a unique hash code for each MazeCell based on its x and y coordinates
+    public int hashCode() {
+        return Objects.hash(xCoordinate, yCoordinate);
     }
 }

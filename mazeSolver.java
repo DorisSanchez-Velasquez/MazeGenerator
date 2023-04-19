@@ -58,20 +58,9 @@ class mazeSolver extends JPanel {
 
                 ArrayList<Integer> cellLogic = new ArrayList<Integer> ();
 
-                g.setColor(Color.BLUE);
-                g.fillRect(cellX + blockCenter, cellY +
-                        blockCenter, blockSize, blockSize); // Draw end point
-
                 if ((maze[x][y] & DIRECTIONS.NORTH.cell) == 0) {
                     cellLogic.add(1);
                     g.drawLine(cellX, cellY, cellX + cellSize, cellY);
-                }
-                else{
-                    cellLogic.add(0);
-                }
-                if ((maze[x][y] & DIRECTIONS.WEST.cell) == 0) {
-                    cellLogic.add(1);
-                    g.drawLine(cellX, cellY, cellX, cellY + cellSize);
                 }
                 else{
                     cellLogic.add(0);
@@ -86,6 +75,13 @@ class mazeSolver extends JPanel {
                 if ((maze[x][y] & DIRECTIONS.EAST.cell) == 0) {
                     cellLogic.add(1);
                     g.drawLine(cellX + cellSize, cellY, cellX + cellSize, cellY + cellSize);
+                }
+                else{
+                    cellLogic.add(0);
+                }
+                if ((maze[x][y] & DIRECTIONS.WEST.cell) == 0) {
+                    cellLogic.add(1);
+                    g.drawLine(cellX, cellY, cellX, cellY + cellSize);
                 }
                 else{
                     cellLogic.add(0);
@@ -105,118 +101,91 @@ class mazeSolver extends JPanel {
         g.fillRect((width - 1) * cellSize + blockCenter, (height - 1) * cellSize +
                 blockCenter, blockSize, blockSize); // Draw end point
 
-        //TO LOOP THROUGH THE MATRIX: THIS CODE IS FOR ITERATING AND FILLING WITH COLOR
-        // g.setColor(Color.BLUE);
-        // g.fillRect(1 * cellSize + blockCenter, 0 * cellSize +
-        //         blockCenter, blockSize, blockSize); // Draw end point
-
-        System.out.println(logicMaze);
-        solveMazeBFS(g);
+        ArrayList<MazeCells> shortestPath = solveMazeBFS(g); //Store the shortest path
+        printShortestPath(shortestPath, g, cellSize, blockCenter, blockSize); //Color the shortest path on the frame
     }
 
 
 
 
 
-    private void solveMazeBFS(Graphics g){
-        int cellSize = 20; // Change this value to adjust the size of the maze cells
+    private ArrayList<MazeCells> solveMazeBFS(Graphics g){
+        //Store the directions: North, South, East, West
+        int[][] Directions = {{0,-1}, {0,1},{1,0},{-1,0}};
 
-        int blockSize = cellSize / 2;
-        int blockCenter = (cellSize - blockSize) / 2;
-        g.setColor(Color.BLUE);
+        //Create a linked list that will store the new paths for each cell
+        LinkedList<MazeCells> nextMazeCell = new LinkedList<>();
 
-        // g.fillRect(cellX + blockCenter, cellY +
-        // blockCenter, blockSize, blockSize); // Draw end point
+        //Add the first cell: 0,0 to the current path
+        MazeCells startCell = new MazeCells(0,0);
+        nextMazeCell.add(startCell);
 
-        // int cellX = x * cellSize;
-        // int cellY = y * cellSize;
-        // String cellName = y + "," + x;
-        // ArrayList<Integer> cellWalls = logicMaze.get(cellName);
+        //Check if the current path is empty
+        while(!nextMazeCell.isEmpty()){
+            //Get the current maze cell
+            MazeCells currentCell = nextMazeCell.remove();
 
-        //Store the north, south, east, and west info of cells
-        MazeCells N, S, E, W;
+            //Get the logic for the walls at the current cell
+            String cellName = currentCell.getXValue() + "," + currentCell.getYValue();
+            ArrayList<Integer> currentCellWalls = logicMaze.get(cellName);
 
-        //Creating queue to perform BFS
-        Queue<MazeCells> mazeCells = new LinkedList<>();
-        MazeCells beginCell = new MazeCells(0, 0, 'S');
-        MazeCells endCell = new MazeCells(width, height, 'E');
-
-        beginCell.markVisited(); //Set the starting cell as visited
-        mazeCells.add(beginCell);
-
-        while(!mazeCells.isEmpty()){
-            MazeCells currentCell = mazeCells.poll();
-
-            //Check if the the current cell is the ending point
-            if(currentCell.getCellContent() == 'E')
+            //If the cell is not within the maze dimensions and the cell has not been visited, break iteration
+            if(!isTrue(currentCell.getXValue(), currentCell.getYValue()) || currentCell.isVisited())
             {
-                printPathCell(currentCell, g, blockCenter, blockSize, cellSize);
-                return;
+                continue;
             }
 
-            //Check if the current cell is a north cell and store it in the path
-            if( !((currentCell.yValue() - 1) <= 0) ) //If not out of range
-            {   
-                N = new MazeCells(currentCell.xValue(), currentCell.yValue(), '0');
-                if(!N.isVisited())
-                {
-                    N.markVisited(); //Mark the cell as visited
-                    currentCell.changeParentCell(N); //Change the parent to track in shortest path
-                    mazeCells.add(N); //Enqueue to the queue tracking mazeCells
-                }
+            //If the cell is the exit, then start backtracking the path
+            if(currentCell.getXValue() == width-1 && currentCell.getYValue() == height-1)
+            {
+                //Return the path from the start cell to the end cell
+                return backtrackPath(currentCell);
             }
 
-            //Check if the current cell is a south cell and store it in the path
-            if( !((currentCell.yValue() + 1) >= height))
+            int wall = 0;
+            for(int[] direction : Directions)
             {
-                S = new MazeCells(currentCell.xValue(), currentCell.yValue(), '0');
-                if(!S.isVisited())
+                //If a wall exist N, S, E, W at the current cell, then don't move in that direction
+                if(currentCellWalls.get(wall) != 1)
                 {
-                    S.markVisited();
-                    currentCell.changeParentCell(S);
-                    mazeCells.add(S);
+                    MazeCells nextCell = new MazeCells(currentCell.getXValue() + direction[0], currentCell.getYValue() + direction[1], currentCell);
+                    nextMazeCell.add(nextCell);
+                    currentCell.setVisited(); 
                 }
-            }
-
-            //Check if the current cell is an east cell and store it in the path
-            if( !((currentCell.xValue() - 1) <= 0))
-            {
-                S = new MazeCells(currentCell.xValue(), currentCell.yValue(), '0');
-                if(!S.isVisited())
-                {
-                    S.markVisited();
-                    currentCell.changeParentCell(S);
-                    mazeCells.add(S);
-                }
-            }
-
-            //Check if the current cell is a west cell and store it in the path
-            if( !((currentCell.xValue() + 1) >= width))
-            {
-                S = new MazeCells(currentCell.xValue(), currentCell.yValue(), '0');
-                if(!S.isVisited())
-                {
-                    S.markVisited();
-                    currentCell.changeParentCell(S);
-                    mazeCells.add(S);
-                }
+                wall++; //Increment the wall that is being checked
             }
         }
 
-        //Report maze as unsolvable
-        System.out.println("Oh no! The Maze in unsolvable!");
-        System.out.println();
+        //If end cell is never found, return an empty path.
+        return new ArrayList<MazeCells>();
     }
 
-    public void printPathCell(MazeCells pathCell, Graphics g, int blockCenter, int blockSize, int cellSize)
+    private ArrayList<MazeCells> backtrackPath(MazeCells currentCell)
     {
-        while(pathCell.getParentCell() != null)
+        ArrayList<MazeCells> path = new ArrayList<>(); //Stores the path from the currentCell
+        MazeCells iteration = currentCell;
+
+        while(iteration != null) //If the cell still has a parent, 
         {
-            pathCell = pathCell.getParentCell();
-            //Change color of the cell to blue
-            int cellX = pathCell.xValue() * cellSize;
-            int cellY = pathCell.yValue() * cellSize;
-            g.fillRect(cellX + blockCenter, cellY + blockCenter, blockSize, blockSize); // Draw end point
+            path.add(iteration); //Add the currentCell to the path
+            iteration = iteration.getParentCell(); //Get the parent of the currentCell
+        }
+
+        return path; //Return the path form the start cell to the end cell
+    }
+
+    public void printShortestPath(ArrayList<MazeCells> shortestPath, Graphics g, int cellSize, int blockCenter, int blockSize)
+    {
+        //Iterate through every cell in the maze found in the shortest path and color it blue
+        g.setColor(Color.blue);
+        for(MazeCells cell: shortestPath)
+        {
+            if(!(cell.getXValue() == 0 && cell.getYValue() == 0) && !(cell.getXValue() == width-1 && cell.getYValue() == height-1) )
+            {
+                int cellX = cell.getXValue() * cellSize;
+                int cellY = cell.getYValue() * cellSize;
+                g.fillRect(cellX + blockCenter, cellY + blockCenter, blockSize, blockSize);
+            }
         }
     }
 
@@ -348,7 +317,7 @@ class mazeSolver extends JPanel {
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
         JFrame frame = new JFrame("Maze Generator");
-        mazeSolver maze = new mazeSolver(4, 4);
+        mazeSolver maze = new mazeSolver(7, 7);
         frame.add(maze);
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.pack();
@@ -360,30 +329,30 @@ class mazeSolver extends JPanel {
 }
 
 class MazeCells{
-    private boolean visited;
     private MazeCells parentCell;
     private int xCoordinate;
     private int yCoordinate;
-    private char cellContent;
+    private boolean visited;
 
     //MAZE CELLS CONSTRUCTOR
-    public MazeCells(int x, int y, char c)
+    public MazeCells(int x, int y)
     {
-        visited = false;
-        parentCell = null;
-        this.cellContent = c;
+        this.visited = false;
+        this.parentCell = null;
         this.xCoordinate = x;
         this.yCoordinate = y;
     }
 
-    public char getCellContent()
+    public MazeCells(int x, int y, MazeCells parentCell)
     {
-        return this.cellContent;
+        this.parentCell = parentCell;
+        this.xCoordinate = x;
+        this.yCoordinate = y;
     }
 
-    public void markVisited()
+    public void setVisited()
     {
-        visited = true;
+        this.visited = true;
     }
 
     public boolean isVisited()
@@ -396,17 +365,12 @@ class MazeCells{
         return this.parentCell;
     }
 
-    public void changeParentCell(MazeCells child)
-    {
-        child.parentCell = this;
-    }
-
-    public int xValue()
+    public int getXValue()
     {
         return this.xCoordinate;
     }
 
-    public int yValue()
+    public int getYValue()
     {
         return this.yCoordinate;
     }
